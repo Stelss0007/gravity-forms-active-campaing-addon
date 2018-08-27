@@ -166,6 +166,54 @@ if (!class_exists("GFForms")) {
 
                 $data["{$fieldName}"] = $fieldValue;
             }
+
+            $params = [
+
+                // the API Key can be found on the "Your Settings" page under the "API" tab.
+                // replace this with your API Key
+                'api_key'      => $form['crm-integration-addon']['activecampaign_api_key'],
+
+                // this is the action that adds a contact
+                'api_action'   => 'contact_add',
+
+                // define the type of output you wish to get back
+                // possible values:
+                // - 'xml'  :      you have to write your own XML parser
+                // - 'json' :      data is returned in JSON format and can be decoded with
+                //                 json_decode() function (included in PHP since 5.2.0)
+                // - 'serialize' : data is returned in a serialized format and can be decoded with
+                //                 a native unserialize() function
+                'api_output'   => 'serialize',
+            ];
+            $url = $form['crm-integration-addon']['activecampaign_url'];
+            $query = build_query($params);
+
+            // define a final API request - GET
+            $api = $url . '/admin/api.php?' . $query;
+
+            $request = curl_init($api); // initiate curl object
+            curl_setopt($request, CURLOPT_HEADER, 0); // set to 0 to eliminate header info from response
+            curl_setopt($request, CURLOPT_RETURNTRANSFER, 1); // Returns response data instead of TRUE(1)
+            curl_setopt($request, CURLOPT_POSTFIELDS, $data); // use HTTP POST to send form data
+            //curl_setopt($request, CURLOPT_SSL_VERIFYPEER, FALSE); // uncomment if you get no gateway response and are using HTTPS
+            curl_setopt($request, CURLOPT_FOLLOWLOCATION, true);
+
+            $response = (string) curl_exec($request); // execute curl post and store results in $response
+
+            // additional options may be required depending upon your server configuration
+            // you can find documentation on curl options at http://www.php.net/curl_setopt
+            curl_close($request); // close curl object
+
+            if ( !$response ) {
+                die('Nothing was returned. Do you have a connection to Email Marketing server?');
+            }
+
+        // This line takes the response and breaks it into an array using:
+        // JSON decoder
+        // $result = json_decode($response);
+        // unserializer
+
+        $result = unserialize($response);
         }
 
         private function isAvailableField($fieldName)
